@@ -239,7 +239,13 @@
     [self checkAllAccounts];
 }
 
+- (void)runOfflineImap {
+    NSLog(@"Runing offlineimap");
+    [NSTask launchedTaskWithLaunchPath:@"/usr/local/bin/offlineimap" arguments:@[]];
+}
+
 - (void)checkAllAccounts {
+    [self runOfflineImap];
     for (GNChecker *checker in _checkers) {
         [checker reset];
     }
