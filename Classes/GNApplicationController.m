@@ -114,6 +114,38 @@
     [self updateMenuItemAccountEnabled:account];
 }
 
+}
+
+- (NSString *)applescriptForMutt {
+    return @"tell application \"iTerm\"\nmake new terminal\ntell the current terminal\nactivate current session\nlaunch session \"Default Session\"\ntell the last session\nwrite text \"cd ~/Downloads; clear; pwd\"\nend tell\nend tell\nend tell";
+}
+
+// Tries to fetch the identifier needed by mutt to open a message directly on launch.
+// Requires `notmuch`
+- (NSString *)mailIdentifierWithFrom:(NSString *)from subject:(NSString *)subject {
+    NSTask *task = [[NSTask alloc] init];
+    [task setLaunchPath: @"/bin/sh"];
+    [task setArguments:@[@"-c",
+     [NSString stringWithFormat:@"notmuch search --limit=1 --output=messages from:%@ subject:%@ | sed s/id://",from, subject]]];
+    
+    // Set the pipe to the standard output and error to get the results of the command
+    NSPipe *p = [NSPipe pipe];
+    [task setStandardOutput:p];
+    [task setStandardError:p];
+    NSFileHandle *fileHandle = [p fileHandleForReading];
+    [task launch];
+    
+    NSData *data = [fileHandle readDataToEndOfFile];
+    NSString *string = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+    return string;
+}
+
+- (void)openMuttWithMessage:(id)sender {
+    NSDictionary *error = @{};
+    [[[NSAppleScript alloc] initWithSource:[self applescriptForMutt]] executeAndReturnError:&error];
+    NSLog(@"%@", error);
+};
+
 - (void)openMessage:(id)sender {
     [self openURL:[NSURL URLWithString:[sender representedObject]] withBrowserIdentifier:[GNAccount accountByMessageLink:[sender representedObject]].browser];
 }
