@@ -114,8 +114,6 @@
     [self updateMenuItemAccountEnabled:account];
 }
 
-}
-
 - (NSString *)applescriptForMutt {
     return @"tell application \"iTerm\"\nmake new terminal\ntell the current terminal\nactivate current session\nlaunch session \"Default Session\"\ntell the last session\nwrite text \"cd ~/Downloads; clear; pwd\"\nend tell\nend tell\nend tell";
 }
@@ -271,16 +269,24 @@
     [self checkAllAccounts];
 }
 
-- (void)runOfflineImap {
-    NSLog(@"Runing offlineimap");
-    [NSTask launchedTaskWithLaunchPath:@"/usr/local/bin/offlineimap" arguments:@[]];
+- (void)runOfflineImap:(void (^)(BOOL success))done {
+    [[NSNotificationCenter defaultCenter] postNotificationName:GNCheckingAccountNotification object:self userInfo:@{@"guid": @""}];
+    dispatch_async( dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+        NSLog(@"Runing offlineimap");
+        [[NSTask launchedTaskWithLaunchPath:@"/usr/local/bin/offlineimap" arguments:@[]] waitUntilExit];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSLog(@"Finished running offlineimap");
+            done(YES);
+        });
+    });
 }
 
 - (void)checkAllAccounts {
-    [self runOfflineImap];
-    for (GNChecker *checker in _checkers) {
-        [checker reset];
-    }
+    [self runOfflineImap:^(BOOL success) {
+        for (GNChecker *checker in _checkers) {
+            [checker reset];
+        }
+    }];
 }
 
 - (GNAccount *)accountForGuid:(NSString *)guid {
