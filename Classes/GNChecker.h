@@ -25,5 +25,5 @@ extern NSString *const GNAccountMenuUpdateNotification;
 - (void)cleanupAndQuit;
 - (BOOL)hasUserError;
 - (BOOL)hasConnectionError;
-
+- (void)cleanup;
 @end

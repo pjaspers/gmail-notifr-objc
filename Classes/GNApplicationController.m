@@ -13,6 +13,7 @@
 #import "GNBrowser.h"
 #import "GNChecker.h"
 #import "GNPreferencesController.h"
+#import "PJOfflineIMAPChecker.h"
 
 @interface GNApplicationController () <GrowlApplicationBridgeDelegate>
 
@@ -282,11 +283,11 @@
 }
 
 - (void)checkAllAccounts {
-    [self runOfflineImap:^(BOOL success) {
-        for (GNChecker *checker in _checkers) {
-            [checker reset];
-        }
-    }];
+    PJOfflineIMAPChecker *muttChecker = [[PJOfflineIMAPChecker alloc] initWithAccount:nil];
+    [muttChecker reset];
+    for (GNChecker *checker in _checkers) {
+        [checker reset];
+    }
 }
 
 - (GNAccount *)accountForGuid:(NSString *)guid {
